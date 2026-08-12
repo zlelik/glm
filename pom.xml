@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <!--
+Instructions for update to the latest versions of all depemdencies can be found in README.md
+-->
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>4.1.0</version><!-- Fixed version (latest available in June 2026) in order to prevent project from breaking during future updates -->
+    <relativePath />
+  </parent>
+
+  <groupId>info.gamed</groupId>
+  <artifactId>glm</artifactId>
+  <version>0.0.1</version>
+  <name>glm</name>
+  <description>Game Life Multiplayer</description>
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <java.version>25</java.version>
+    <frontend-src-dir>${project.basedir}/src/main/js</frontend-src-dir>
+    <node.version>v24.16.0</node.version>
+    <npm.version>11.13.0</npm.version>
+    <frontend-maven-plugin.version>2.0.1</frontend-maven-plugin.version>
+    <mapstruct.version>1.6.3</mapstruct.version>
+    <!-- Set to true (e.g. 'mvn package -DskipFrontend=true', without 'clean') to skip the React/Vite
+         build and rebuild only the Java side, reusing the existing bundle. -->
+    <skipFrontend>false</skipFrontend>
+    <!-- Which npm script the Maven frontend build runs: 'build' = production (minified, default),
+         'build:dev' = development (unminified + source maps). The 'dev' profile switches it to
+         build:dev (e.g. 'mvn clean package -Pdev' or 'mvn clean spring-boot:run -Pdev'). -->
+    <frontendBuildScript>build</frontendBuildScript>
+  </properties>
+  <packaging>war</packaging>
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-thymeleaf</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-jpa</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-validation</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-devtools</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-websocket</artifactId>
+    </dependency>
+    <!-- Embedded Tomcat is 'provided': it is on the classpath for 'mvn spring-boot:run', 'java -jar' and
+         tests, but is NOT packaged into the WAR's WEB-INF/lib. That lets the same WAR deploy cleanly to an
+         external Tomcat (which supplies the servlet container) without bundling a second Tomcat. -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-tomcat</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+    <!-- MapStruct generates the entity -> DTO mappers at compile time (see GlmMapper). -->
+    <dependency>
+      <groupId>org.mapstruct</groupId>
+      <artifactId>mapstruct</artifactId>
+      <version>${mapstruct.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>com.mysql</groupId>
+        <artifactId>mysql-connector-j</artifactId>
+        <!--<version>8.4.0</version>-->
+        <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.security</groupId>
+      <artifactId>spring-security-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <!-- Security dependencies -->
+    <dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+		<dependency>
+		    <groupId>org.thymeleaf.extras</groupId>
+		    <artifactId>thymeleaf-extras-springsecurity6</artifactId>
+		</dependency>
+    <dependency>
+      <groupId>com.codeborne</groupId>
+      <artifactId>selenide</artifactId>
+      <version>7.7.3</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>5.12.1</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <!-- Build the artifact as ROOT.war so that, dropped into Tomcat's webapps/, it is served at the
+         root context ('/'). -->
+    <finalName>ROOT</finalName>
+    <plugins>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+        <!-- The default 'repackage' execution (inherited from spring-boot-starter-parent) is enabled, so
+             'mvn package' produces an executable WAR that is ALSO deployable to an external Tomcat: the
+             'provided' embedded Tomcat is placed in WEB-INF/lib-provided (used by 'java -jar', ignored by
+             an external container). -->
+      </plugin>
+      <!-- This Plugin is not needed. Was creation is done by spring-boot-maven-plugin -->
+      <!-- <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-war-plugin</artifactId>
+        <configuration>
+          <failOnMissingWebXml>false</failOnMissingWebXml>
+        </configuration>
+      </plugin>-->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <release>${java.version}</release>
+          <!-- Run the MapStruct annotation processor so it generates GlmMapperImpl at compile time. -->
+          <annotationProcessorPaths>
+            <path>
+              <groupId>org.mapstruct</groupId>
+              <artifactId>mapstruct-processor</artifactId>
+              <version>${mapstruct.version}</version>
+            </path>
+          </annotationProcessorPaths>
+        </configuration>
+      </plugin>
+      <!-- Copy the frontend build inputs (config + JS sources) into target/frontend so Vite runs there
+           and creates node_modules under target/ (wiped by 'mvn clean') instead of in the project root.
+           Must run before the frontend-maven-plugin npm step below. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-frontend-build-inputs</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/frontend</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${project.basedir}</directory>
+                  <includes>
+                    <include>package.json</include>
+                    <include>package-lock.json</include>
+                    <include>vite.config.mjs</include>
+                    <include>tsconfig.json</include>
+                  </includes>
+                </resource>
+                <resource>
+                  <directory>${project.basedir}/src/main/js</directory>
+                  <targetPath>src/main/js</targetPath>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>com.github.eirslett</groupId>
+        <artifactId>frontend-maven-plugin</artifactId>
+        <version>${frontend-maven-plugin.version}</version>
+        <configuration>
+          <!-- Install the node/npm binaries under target/node, and run npm/Vite from
+               target/frontend so node_modules is created there, not in the project root. -->
+          <installDirectory>target</installDirectory>
+          <workingDirectory>${project.build.directory}/frontend</workingDirectory>
+          <!-- -DskipFrontend=true skips node install + npm ci + the Vite build (Java-only rebuild). -->
+          <skip>${skipFrontend}</skip>
+        </configuration>
+        <executions>
+          <execution>
+            <id>install node and npm</id>
+            <goals>
+              <goal>install-node-and-npm</goal>
+            </goals>
+            <configuration>
+              <nodeVersion>${node.version}</nodeVersion>
+              <npmVersion>${npm.version}</npmVersion>
+            </configuration>
+          </execution>
+          <execution>
+            <id>npm ci</id>
+            <goals>
+              <goal>npm</goal>
+            </goals>
+            <configuration>
+              <!-- 'npm ci' performs a clean, reproducible install directly from package-lock.json. -->
+              <arguments>ci</arguments>
+            </configuration>
+          </execution>
+          <execution>
+            <id>vite build</id>
+            <goals>
+              <goal>npm</goal>
+            </goals>
+            <configuration>
+              <!-- Frontend build run from target/frontend: 'npm run ${frontendBuildScript}' => Vite.
+                   Default 'build' is the minified production bundle; the 'dev' profile switches it to
+                   'build:dev' (unminified). PROJECT_ROOT tells Vite where to write the bundle
+                   (target/classes/static/built/bundle.js). -->
+              <arguments>run ${frontendBuildScript}</arguments>
+              <environmentVariables>
+                <PROJECT_ROOT>${project.basedir}</PROJECT_ROOT>
+              </environmentVariables>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>com.rimerosolutions.maven.plugins</groupId>
+        <artifactId>wrapper-maven-plugin</artifactId>
+        <version>0.0.4</version>
+        <configuration>
+          <mavenVersion>3.3.3</mavenVersion>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <!-- Development build: produce an UNMINIFIED React bundle (with source maps) instead of the
+         default minified production bundle. Activate with -Pdev, e.g.:
+           mvn clean package -Pdev          (deployable WAR with unminified JS)
+           mvn clean spring-boot:run -Pdev  (run on embedded Tomcat with unminified JS) -->
+    <profile>
+      <id>dev</id>
+      <properties>
+        <frontendBuildScript>build:dev</frontendBuildScript>
+        <!-- Activate the Spring 'dev' profile when running via spring-boot:run -Pdev, so logback-spring.xml
+             switches the info.gamed.glm package to DEBUG (verbose game-logic logs). Production (the WAR on
+             external Tomcat, no profile) stays at INFO. -->
+        <spring-boot.run.profiles>dev</spring-boot.run.profiles>
+      </properties>
+    </profile>
+  </profiles>
+
+</project>

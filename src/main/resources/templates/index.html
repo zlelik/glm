@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head lang="en">
+  <meta charset="UTF-8" />
+  <title>Game Life Multiplayer</title>
+  <link rel="stylesheet" th:href="@{/main.css}" href="/main.css" />
+</head>
+<body>
+  <!--
+    Authentication marker for the React app. Spring Security renders this element only when the user
+    is authenticated, so the client detects login state from the presence of this element.
+  -->
+  <span id="authenticated" style="display: none" sec:authorize="isAuthenticated()"></span>
+
+  <div id="react"></div>
+
+  <!--
+    Thymeleaf context-relative URL (@{...}) so the bundle resolves to <context-path>/built/bundle.js
+    for any route and under any context path. The static src is a fallback when the page is opened
+    outside the Thymeleaf engine.
+  -->
+  <script th:src="@{/built/bundle.js}" src="/built/bundle.js"></script>
+
+</body>
+</html>

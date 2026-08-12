@@ -1,0 +1,153 @@
+/* Borders/padding count inside element sizes, so the flex height math stays exact (no surprise overflow). */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Remove the default body margin - it would push the 100dvh layout past the viewport and cause scrolling. */
+body {
+  margin: 0;
+  font-family: Verdana;
+}
+
+/* Main navigation: a horizontal row of links, no list bullets, spaced with a gap (no pipe separators).
+   flex-wrap lets the items flow onto more lines on narrow/mobile screens instead of overflowing sideways. */
+nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+/* App shell: a full-viewport column (100dvh handles the mobile address bar), inset 10px from the edges.
+   box-sizing:border-box keeps the padding inside 100dvh, so there is no scrolling. */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  padding: 10px;
+}
+
+.app-main {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* Fill the parent's height (Game Hub page). */
+.full-height {
+  height: 100%;
+}
+
+/* Profile summary stats on one line, spaced apart (no separator character between them). */
+.profile-summary span {
+  margin-right: 1.5em;
+}
+
+/* Profile match-history table: 1px grid lines so every cell is clearly bordered for readability. */
+.stats-table {
+  border-collapse: collapse;
+}
+.stats-table th,
+.stats-table td {
+  border: 1px solid;
+  padding: 4px 8px;
+  text-align: left;
+}
+
+/* Live game and create/join form: a flex column filling the available height. */
+.game,
+.game-form {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.game {
+  background: #fff;
+}
+
+/* In fullscreen this element IS the screen, so inset it here (Layout's padding no longer applies). */
+.game:fullscreen {
+  padding: 10px;
+}
+
+/* Stats + fullscreen toggle on one line (icon right after the stats); small gap before the board. */
+.game-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+
+/* The board area takes the remaining height; the board (canvas) is centred and fits inside it. */
+.game-canvas-area,
+.game-form-board {
+  flex: 1;
+  min-height: 0;
+}
+
+.game-form-board {
+  margin-top: 5px;
+}
+
+.board-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.board-canvas {
+  border: 2px solid black;
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+/* Icon-only button (e.g. the fullscreen toggle). */
+.icon-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  vertical-align: middle;
+}
+
+.error-text {
+  color: red;
+}
+
+/* A small colour square (e.g. player colour in the joinable-games table). */
+.color-swatch {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 1px solid #000;
+}
+
+/* Modal message popup (win/lose/draw). */
+.popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.popup-box {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 8px;
+  min-width: 240px;
+  text-align: center;
+}

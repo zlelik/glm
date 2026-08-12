@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Application-scoped access log, configured here in the WAR (not in Tomcat's server.xml), so the log
+  format lives with the app and is portable across Tomcat instances and the hardened image.
+
+  Pattern fields:
+    %a                          - immediate peer IP. Behind Docker's bridge network this is the Docker
+                                  gateway (e.g. 172.19.x.x), not the real client - Docker masquerades
+                                  the source IP, so for DIRECT local access the real LAN IP is lost and
+                                  the two header fields below are empty ('-').
+    %{CF-Connecting-IP}i        - real client IP, stamped by Cloudflare. The trustworthy one in
+                                  production (Cloudflare sets it; clients cannot spoof it).
+    %{X-Forwarded-For}i         - forwarded client IP chain (also set by Cloudflare / any proxy).
+    [dd/MMM/yyyy:HH:mm:ss.SSS Z] - request time with millisecond precision; msec_frac is the .SSS part.
+    "%r" %s %b                  - request line, HTTP status, bytes sent.
+    [%{ms}Tms]                  - time taken to process the request, in milliseconds, e.g. [25ms].
+                                  (Note: %D is microseconds in Tomcat 11; %{ms}T is milliseconds.)
+-->
+<Context>
+  <Valve className="org.apache.catalina.valves.AccessLogValve"
+         directory="logs"
+         prefix="glm_access" suffix=".log"
+         pattern="%a %{CF-Connecting-IP}i %{X-Forwarded-For}i %l %u [%{dd/MMM/yyyy:HH:mm:ss}t.%{msec_frac}t %{Z}t] &quot;%r&quot; %s %b [%{ms}Tms]" />
+</Context>

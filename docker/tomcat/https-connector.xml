@@ -1,0 +1,22 @@
+<!--
+  HTTPS connector added on top of Chainguard's stock server.xml by docker/tomcat/Dockerfile.
+
+  TLS is terminated here at Tomcat using the Cloudflare Origin CA certificate. The certificate and key
+  are NOT baked into the image - they are mounted at runtime into conf/tls/ (see docker-compose.yml), so
+  they can be replaced/rotated without rebuilding the image.
+
+  Tomcat 11's NIO connector reads PEM files directly via JSSE, so the Cloudflare PEM files are used
+  as-is - no conversion to JKS or PKCS12 is needed. (If you generated an ECDSA Origin certificate
+  instead of the default RSA one, change type="RSA" to type="EC".)
+
+  The connector listens on 8443 inside the container (a non-root process cannot bind 443); compose maps
+  host 443 -> container 8443, and Cloudflare connects to the origin on 443 in Full (Strict) mode.
+-->
+<Connector port="8443" protocol="org.apache.coyote.http11.Http11NioProtocol"
+           maxThreads="200" SSLEnabled="true" scheme="https" secure="true">
+  <SSLHostConfig>
+    <Certificate certificateKeyFile="${catalina.base}/conf/tls/private_key.pem"
+                 certificateFile="${catalina.base}/conf/tls/orig_cer.pem"
+                 type="RSA" />
+  </SSLHostConfig>
+</Connector>

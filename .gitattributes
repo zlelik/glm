@@ -1,0 +1,22 @@
+# Line-ending policy for the whole repository.
+#
+# Git stores every text file normalized to LF in the repository (the committed blob),
+# and checks it out with CRLF (\r\n) line endings in the working tree on every machine.
+# Result: files on disk are always CRLF (Windows style), while the stored/shared form is
+# a uniform LF, so diffs never show spurious whole-file line-ending changes again.
+#
+# `text=auto` lets git auto-detect text vs binary by content; binary files are left
+# untouched. A developer who wants LF on their own disk can override locally (and only
+# for their clone) via .git/info/attributes with `* text=auto eol=lf`.
+* text=auto eol=crlf
+
+# Be explicit about binary assets so they are never treated as text / line-ending converted.
+*.gif  binary
+*.ico  binary
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.woff  binary
+*.woff2 binary
+*.ttf  binary
+*.jar  binary

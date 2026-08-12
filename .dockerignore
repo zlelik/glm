@@ -1,0 +1,6 @@
+# Keep the Docker build context small. The image build only needs docker/tomcat/https-connector.xml;
+# the WAR and everything else is delivered at runtime via volumes, not baked into the image.
+target/
+node_modules/
+.git/
+*.log

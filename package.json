@@ -1,0 +1,41 @@
+{
+  "name": "glm",
+  "version": "0.1.0",
+  "description": "Game Life Multiplayer",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zlelik/glm.git"
+  },
+  "keywords": [
+    "game life",
+    "multiplayer"
+  ],
+  "author": "Z@",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://glm.gamed.info"
+  },
+  "homepage": "https://glm.gamed.info",
+  "dependencies": {
+    "@stomp/stompjs": "^7.1.1",
+    "@tanstack/react-query": "^5.62.7",
+    "i18next": "^26.3.1",
+    "i18next-browser-languagedetector": "^8.2.0",
+    "loglevel": "^1.9.2",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "react-i18next": "^17.0.8",
+    "react-router-dom": "^7.18.0"
+  },
+  "scripts": {
+    "build": "tsc --noEmit && vite build",
+    "build:dev": "tsc --noEmit && vite build --mode development",
+    "watch": "vite build --watch --mode development"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.2",
+    "@types/react-dom": "^19.0.2",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.7"
+  }
+}

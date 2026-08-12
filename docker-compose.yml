@@ -1,0 +1,95 @@
+# Run the GLM app on a hardened Chainguard Tomcat, with TLS terminated at Tomcat using a
+# Cloudflare Origin CA certificate. Pair this with Cloudflare SSL/TLS mode "Full (Strict)":
+# User -> (HTTPS) -> Cloudflare -> (HTTPS, validated) -> this origin.
+#
+# ==================================================================================================
+# REQUIRED: set the GLM_HOME environment variable before running any 'docker compose' command.
+# ==================================================================================================
+# No .env file is used. GLM_HOME points to your base data folder; the app's webapps, logs and TLS
+# cert live under $GLM_HOME/tomcat/. It is mandatory - if it is not set, 'docker compose' stops with
+# an error (the ${GLM_HOME:?...} guards below) instead of silently mounting the wrong folder.
+# The variable lives only in the current terminal session, so set it again in each new terminal.
+#
+#   Windows (cmd):
+#     set GLM_HOME=d:\Data\workspaces\docker\glm
+#   Windows (PowerShell):
+#     $env:GLM_HOME = "d:\Data\workspaces\docker\glm"
+#   Linux / macOS (bash) - 'export' is required so child processes (docker compose) inherit it:
+#     export GLM_HOME=/home/user/docker/glm
+#
+# Expected folders / files under $GLM_HOME/tomcat/ :
+#     webapps/        -> drop ROOT.war here to deploy the app
+#     tomcat-logs/    -> Tomcat writes its logs here
+#     tls/            -> private_key.pem + orig_cer.pem (Cloudflare Origin CA key + certificate)
+#
+# --------------------------------------------------------------------------------------------------
+# Common commands (run after GLM_HOME is set, from the project root)
+# --------------------------------------------------------------------------------------------------
+#   First build & deploy:
+#     Windows (cmd):  mvn clean package
+#                     set GLM_HOME=d:\Data\workspaces\docker\glm
+#                     copy target\ROOT.war %GLM_HOME%\tomcat\webapps\ROOT.war
+#                     docker compose up -d --build
+#     Linux (bash):   mvn clean package
+#                     export GLM_HOME=/home/user/docker/glm
+#                     cp target/ROOT.war "$GLM_HOME/tomcat/webapps/ROOT.war"
+#                     docker compose up -d --build
+#
+#   Update the app only:        rebuild the war and copy it into $GLM_HOME/tomcat/webapps again.
+#                               Tomcat auto-deploys it - no image rebuild, no restart.
+#   Update the Tomcat image:    docker compose build --pull && docker compose up -d
+#   Rotate the TLS certificate: replace the PEM files in $GLM_HOME/tomcat/tls, then:
+#                               docker compose restart
+#   Tail logs:                  docker compose logs -f   (or open the tomcat-logs folder)
+#   Stop / remove:              docker compose down
+# --------------------------------------------------------------------------------------------------
+
+# Project name shown in Docker Desktop / used as the compose group name. Without this, Compose
+# would default to the project folder name (e.g. "working-dir").
+name: glm
+
+services:
+  glm:
+    build:
+      context: .
+      dockerfile: docker/tomcat/Dockerfile
+    image: glm-tomcat:latest
+    container_name: glm
+    restart: unless-stopped
+
+    # Cloudflare (Full (Strict)) connects to the origin on 443. Tomcat runs as a non-root user and
+    # listens on 8443 inside the container (non-root cannot bind 443), so Docker maps host 443 ->
+    # container 8443. The plain-HTTP port 8080 is intentionally NOT published, so the origin is
+    # reachable only over TLS.
+    ports:
+      - "443:8443"
+
+    environment:
+      # Container timezone -> the access log timestamps show local time (e.g. +0200) instead of UTC.
+      # The JDK bundles its own timezone database, so this works even on the minimal hardened image.
+      TZ: "Europe/Amsterdam"
+      # JVM sizing - tune to your server.
+      CATALINA_OPTS: "-Xms256m -Xmx512m"
+      # Production database: uncomment to run on the 'prod' Spring profile (externalized MySQL, no demo
+      # seeding, quiet logs). Without these the app starts on its default in-memory H2 database (data is
+      # lost on restart). Point GLM_DB_URL at a reachable MySQL instance (add a db service or use an
+      # external host). See CONTRIBUTING.md "Configuration & profiles".
+      # SPRING_PROFILES_ACTIVE: "prod"
+      # GLM_DB_URL: "jdbc:mysql://db:3306/glm"
+      # GLM_DB_USERNAME: "glm"
+      # GLM_DB_PASSWORD: "${GLM_DB_PASSWORD:?set GLM_DB_PASSWORD}"
+
+    volumes:
+      # App: drop ROOT.war here to deploy or update the app without touching the image.
+      - ${GLM_HOME:?GLM_HOME must be set (see header)}/tomcat/webapps:/usr/local/tomcat/webapps
+
+      # Logs: Tomcat (and the access log, if you enable one) write here; full control on the host.
+      - ${GLM_HOME:?GLM_HOME must be set (see header)}/tomcat/logs:/usr/local/tomcat/logs
+
+      # TLS: Cloudflare Origin CA certificate + key (PEM), read-only (:ro -> the container can read
+      # but not modify them). Replace these files on the host and `docker compose restart` to rotate
+      # the certificate - no image rebuild needed. server.xml (baked into the image) expects exactly
+      # these two filenames in this folder:
+      #   private_key.pem  - the Origin CA private key
+      #   orig_cer.pem     - the Origin CA certificate
+      - ${GLM_HOME:?GLM_HOME must be set (see header)}/tomcat/tls:/usr/local/tomcat/conf/tls:ro

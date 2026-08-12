@@ -1,0 +1,9 @@
+/target/
+.project
+.classpath
+.settings/
+node_modules/
+# Local run/test artifacts: Selenide test reports and logback output written when catalina.base
+# is unset (e.g. running the app/tests outside the container).
+/build/
+/logs/

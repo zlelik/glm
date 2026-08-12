@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Application (WAR-level) logging.
+
+  Keeps Spring Boot's standard CONSOLE output unchanged (so `docker logs` still shows everything), and
+  ADDITIONALLY writes the application log to a daily-rolling file in Tomcat's logs directory, which is
+  volume-mounted to the host. The file is named output_<date>.log to match the access logs.
+
+  Note: this captures the application's own (SLF4J/Logback) output. Tomcat's own server logs (catalina)
+  are produced by a separate logging system and are not included here.
+-->
+<configuration>
+
+    <!-- Spring Boot's default conversion rules + log patterns (defines FILE_LOG_PATTERN, CONSOLE_LOG_PATTERN). -->
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <!-- Spring Boot's standard CONSOLE appender (keeps existing stdout / `docker logs` output). -->
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+    <!-- Daily-rolling application log file. With no <file> element, the active file IS the dated file
+         (e.g. output_2026-06-24.log), the same way the access logs are named. catalina.base resolves to
+         the Tomcat install (/usr/local/tomcat) in production; it falls back to '.' for a plain run. -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${catalina.base:-.}/logs/output_%d{yyyy-MM-dd}.log</fileNamePattern>
+            <!-- Keep 30 days, but cap total size so the verbose 500ms-tick logging can't fill the disk.
+                 When the cap is exceeded, the oldest files are deleted. -->
+            <maxHistory>90</maxHistory>
+            <totalSizeCap>10GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Verbose game-logic diagnostics are logged at DEBUG. The 'dev' Spring profile turns them on
+         (e.g. 'mvn spring-boot:run -Pdev', which activates this profile via spring-boot.run.profiles);
+         with no profile (production) the root INFO level keeps them off, so prod logs stay quiet. -->
+    <springProfile name="dev">
+        <logger name="info.gamed.glm" level="DEBUG"/>
+    </springProfile>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </root>
+
+</configuration>
